@@ -1,6 +1,6 @@
 #EbookLib==0.18
 #git+https://github.com/changyy/ebooklib.git@release#egg=EbookLib
-EbookLib @ git+https://github.com/changyy/ebooklib.git@release
+#EbookLib @ git+https://github.com/changyy/ebooklib.git@release
 lxml==4.9.3
 Pillow==10.1.0
 PyMuPDF==1.23.7
