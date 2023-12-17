@@ -23,6 +23,7 @@ This tool relies on the Python library `EbookLib` to create EPUB format files. H
 
 ```
 % pip install epub-image-helper
+% pip install git+https://github.com/changyy/ebooklib.git@release#egg=EbookLib
 % epub-image-helper
 {
     "status": false,
