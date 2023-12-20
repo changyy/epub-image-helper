@@ -11,7 +11,7 @@ import time
 from epub_image_helper import common
 
 class EPUBImageHelper:
-    def __init__(self, outputEPUBPath: str = '/tmp/test.epub', imageBookId: str = str(uuid.uuid4()), imageBookTitle: str = 'Unknown', imageBookLanguage: str = 'en', imageBookAuthor: list[str] = ['Test'], tableOfContent: list[dict[str, list[str]]] = [], pickFirstImageToBeBookCover: bool = False):
+    def __init__(self, outputEPUBPath: str = '/tmp/test.epub', imageBookId: str = str(uuid.uuid4()), imageBookTitle: str = 'Unknown', imageBookLanguage: str = 'en', imageBookAuthor: list[str] = ['Test'], tableOfContent: list[dict[str, list[str]]] = [], pickFirstImageToBeBookCover: bool = False, imageBookPageProgressionDirection: str = 'rtl', imageBookOpfMeta: list[dict] = []):
         self.outputEPUBPath = outputEPUBPath
         self.bookId = imageBookId
         self.bookTitle = imageBookTitle
@@ -21,30 +21,67 @@ class EPUBImageHelper:
         self.pickFirstImageToBeBookCover = pickFirstImageToBeBookCover
         self.bookCoverBytes = None
         self.bookCoverFilename = 'defaultCover.jpg'
+        self.bookPageProgressionDirection = imageBookPageProgressionDirection
+        self.bookOpfMeta = imageBookOpfMeta
         self.tableOfContent = tableOfContent
         self.objectId = 0
         self.imageFormatConversionTable = {}
+        self.cssMainUsageName = 'main.css'
+        self.cssImageUsageName = 'image.css'
+        self.jsMainUsageName = 'main.js'
+        self.jsImageUsageName = 'image.js'
+
         self.xhtmlResource = {
+            'javascript': {
+                self.jsMainUsageName: '''
+                ''',
+                self.jsImageUsageName: '''
+                '''
+            },
             'style': {
-                'default.css': '''
+                self.cssMainUsageName: '''
+@charset "UTF-8";
 html, body { margin: 0; padding: 0; }
+                ''',
+                self.cssImageUsageName: '''
+   html, body {
+     margin: 0;
+     padding: 0;
+     width: 100%;
+     height: 100%;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+   }
+
+   svg {
+     width: 100%;
+     height: 100%;
+   }
+
+   image {
+     width: 100%;
+     height: 100%;
+     object-fit: contain;
+   }
                 '''
             }
         }
         self.xhtmlTemplate = {
             "image": '''
 <svg 
-  xmlns="http://www.w3.org/2000/svg"
-  version="1.1"
+  xmlns="http://www.w3.org/2000/svg" version="1.1"
   xmlns:xlink="http://www.w3.org/1999/xlink"
-  width="100%" height="100%"
-  viewBox="0 0 {imageWidth} {imageHeight}">
-  <image
-    width="{imageWidth}" height="{imageHeight}" 
-    xlink:href="{imagePath}" />
+  width="100%" height="100%" viewBox="0 0 {imageWidth} {imageHeight}">
+  <image xlink:href="{imagePath}" width="{imageWidth}" height="{imageHeight}" />
 </svg>
 ''',
         }
+
+    def setPageProgressionDirection(self, pageProgressionDirection):
+        if pageProgressionDirection in ['rtl', 'rtl', 'default']:
+            self.bookPageProgressionDirection = pageProgressionDirection
+
     def setTableOfContent(self, inputTOC: list[dict]) -> dict:
         checker = self.veirfyTableOfContent(inputTOC)
         if checker['status']:
@@ -231,13 +268,36 @@ html, body { margin: 0; padding: 0; }
         obj = epub.EpubHtml(title=chapterTitle, file_name=chapterFilename, lang=self.bookLanguage, content=chapterContent)
         return (obj, chapterFilename, chapterId)
 
+    def enableImageBookLayout(self):
+        self.bookOpfMeta.append(
+            {
+                'namespace': None,
+                'tag': 'meta',
+                'value': 'pre-paginated',
+                'others': {
+                    'property': 'rendition:layout'
+                }
+            }
+        )
+        self.bookOpfMeta.append(
+            {
+                'namespace': None,
+                'tag': 'meta',
+                'value': 'landscape',
+                'others': {
+                    'property': 'rendition:spread'
+                }
+            }
+        )
+
     def build(self):
         # create epub object
         book = epub.EpubBook()
+        book.set_direction(self.bookPageProgressionDirection)
         book.set_identifier(self.bookId)
         book.set_title(self.bookTitle)
         book.set_language(self.bookLanguage)
-        bookSpine = ["nav"]
+        bookSpine = [] # ["nav"]
         bookTableOfContent = []
 
         if self.bookAuthor:
@@ -248,12 +308,24 @@ html, body { margin: 0; padding: 0; }
         if self.bookCoverBytes != None:
             book.set_cover(self.bookCoverFilename, self.bookCoverBytes)
 
-        xhtmlResource = []
-        if self.xhtmlResource and self.xhtmlResource['style']:
-            for cssFileName, cssContent in self.xhtmlResource['style'].items():
-                cssObj = epub.EpubItem(uid=self.getObjectId(f'css'), file_name=cssFileName, content=cssContent, media_type='text/css')
-                book.add_item(cssObj)
-                xhtmlResource.append(cssObj)
+        if self.bookOpfMeta:
+            for metaItem in self.bookOpfMeta:
+                if 'value' not in metaItem or 'tag' not in metaItem:
+                    continue
+                book.add_metadata(
+                    metaItem['namespace'] if 'namespace' in metaItem else None, 
+                    metaItem['tag'], metaItem['value'],
+                    metaItem['others'] if 'others' in metaItem else None
+                )
+
+        xhtmlResource = {}
+        if self.xhtmlResource:
+            if self.xhtmlResource['style']:
+                for cssFileName, cssContent in self.xhtmlResource['style'].items():
+                    cssObj = epub.EpubItem(uid=self.getObjectId(f'css'), file_name=cssFileName, content=cssContent, media_type='text/css')
+                    book.add_item(cssObj)
+                    xhtmlResource[cssFileName] = cssObj
+
 
         if self.tableOfContent:
             # import images
@@ -270,7 +342,7 @@ html, body { margin: 0; padding: 0; }
                         continue
                     images = common.getImagesFrom(item['imageDir'])
                     totalImages = len(images)
-                    pickFirstPage = False
+                    #pickFirstPage = False
                     for imageIndex, imageInfo in enumerate(images):
                         imagePath = imageInfo[0]
                         exname = imageInfo[1].strip().strip('.').lower()
@@ -300,8 +372,13 @@ html, body { margin: 0; padding: 0; }
 
                             book.add_item(imageObj)
                             chapterUid = self.getObjectId(f'{index + 1}')
+                            if imageIndex % 20 == 0:
+                                chapterTitle = f'{item["name"]} - {imageIndex+1:04} / {totalImages:04} {(imageIndex + 1) * 100/totalImages:.2f}%'
+                            else:
+                                chapterTitle = f'{item["name"]} - {imageIndex+1:04}'
+
                             chapterObj, chapterFilename, chapterId = self.createNewChapter(
-                                f'{imageIndex+1:04}/{totalImages:04} {(imageIndex + 1) * 100/totalImages:.2f}% - {item["name"]}',
+                                chapterTitle,
                                 chapterUid,
                                 self.xhtmlTemplate["image"].format(
                                     imageName=imageOutputPath, 
@@ -311,16 +388,22 @@ html, body { margin: 0; padding: 0; }
                                     imagePath=imageOutputPath
                                 )
                             )
-                            for itemResource in xhtmlResource:
-                                chapterObj.add_item(itemResource)
+
+                            #chapterObj.add_property('svg')
+                            chapterObj.add_meta(name='viewport', content=f'width={imageSize[0]}, height={imageSize[1]}')
+
+                            if xhtmlResource:
+                                for cssName, itemResource in xhtmlResource.items():
+                                    chapterObj.add_item(itemResource)
 
                             #print(chapterObj.get_body_content())
                             book.add_item(chapterObj)
                             bookSpine.append(chapterObj)
 
-                            if pickFirstPage:
-                                pickFirstPage = False
-                                bookTableOfContent.append( chapterObj )
+                            #if pickFirstPage:
+                            #    pickFirstPage = False
+                            #    bookTableOfContent.append( chapterObj )
+                            bookTableOfContent.append( chapterObj )
 
 
         book.spine = bookSpine

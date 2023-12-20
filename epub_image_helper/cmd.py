@@ -21,7 +21,9 @@ def main():
     parser.add_argument("--bookTitle", type=str, default='Unknown', help="set book title")
     parser.add_argument("--bookId", type=str, default=str(uuid.uuid4()), help="set book uuid info")
     parser.add_argument("--bookAuthor", type=str, default='Unknown', help="set book author info")
+    parser.add_argument("--bookPageProgressionDirection", type=str, choices=['rtl', 'ltr', 'default'], default='rtl', help="set book page progression direction: rtl, ltr, default")
     parser.add_argument("--pickFirstImageToBeBookCover", action="store_true", default=False, help="Select the first image as the book cover when the 'bookCover' parameter is not specified")
+    parser.add_argument("--enableImageBookLayout", action="store_true", default=False, help="Use image book layout")
     parser.add_argument("--debug", action="store_true", default=False, help="show bookConfig only")
     parser.add_argument("--epubcheck", action="store_true", default=False, help="test output epub format via epubcheck command")
 
@@ -37,12 +39,15 @@ def main():
     output['input']['bookId'] = args.bookId
     output['input']['bookTitle'] = args.bookTitle
     output['input']['bookAuthor'] = args.bookAuthor
+    output['input']['bookPageProgressionDirection'] = args.bookPageProgressionDirection
+    output['input']['bookTableOfContent'] = []
+    output['input']['bookOpfMeta'] = []
     output['input']['epubcheck'] = args.epubcheck
     output['input']['imageDir'] = args.imageDir
     output['input']['pickFirstImageToBeBookCover'] = args.pickFirstImageToBeBookCover
     output['input']['debug'] = args.debug
-    output['input']['bookTableOfContent'] = []
     output['input']['imageFormatConversionTable'] = {}
+    output['input']['enableImageBookLayout'] = args.enableImageBookLayout
 
     bookConfig = output['input']['bookConfig']
     if output['input']['bookConfig'] == '@-':
@@ -61,7 +66,7 @@ def main():
             sys.exit(0)
 
         if bookConfigJSONObject:
-            for field in ['bookCover', 'bookId', 'bookAuthor', 'epubcheck', 'bookTableOfContent', 'imageDir', 'pickFirstImageToBeBookCover', 'debug', 'imageFormatConversionTable']:
+            for field in ['output', 'bookCover', 'bookId', 'bookTitle', 'bookId', 'bookAuthor', 'epubcheck', 'bookTableOfContent', 'imageDir', 'pickFirstImageToBeBookCover', 'debug', 'imageFormatConversionTable', 'epubcheck', 'bookPageProgressionDirection', 'bookOpfMeta']:
                 if field in bookConfigJSONObject:
                     output['input'][field] = bookConfigJSONObject[field]
 
@@ -108,9 +113,13 @@ def main():
         imageBookId=output['input']['bookId'],
         imageBookTitle=output['input']['bookTitle'],
         imageBookAuthor=output['input']['bookAuthor'],
-        #tableOfContent=output['input']['bookTableOfContent']
+        imageBookPageProgressionDirection=output['input']['bookPageProgressionDirection'],
+        #tableOfContent=output['input']['bookTableOfContent'],
+        imageBookOpfMeta=output['input']['bookOpfMeta'],
         pickFirstImageToBeBookCover=output['input']['pickFirstImageToBeBookCover'], 
     )
+    if output['input']['enableImageBookLayout']:
+        obj.enableImageBookLayout()
 
     if output['input']['bookTableOfContent']:
         setTOCStatus = obj.setTableOfContent(output['input']['bookTableOfContent'])
