@@ -10,7 +10,8 @@ This tool allows you to easily convert specified photos and images into EPUB e-b
 % cat requirements.txt 
 #EbookLib==0.18
 #git+https://github.com/changyy/ebooklib.git@release#egg=EbookLib
-EbookLib @ git+https://github.com/changyy/ebooklib.git@release
+#EbookLib @ git+https://github.com/changyy/ebooklib.git@release
+EbookLib.changyy==0.18.2023.1221.0
 lxml==4.9.3
 Pillow==10.1.0
 PyMuPDF==1.23.7
@@ -18,17 +19,22 @@ PyMuPDFb==1.23.7
 six==1.16.0
 ```
 
-This tool relies on the Python library `EbookLib` to create EPUB format files. However, in the EPUB generation process of EbookLib version 0.18, the `<svg viewBox="">` syntax cannot be used properly. As a result, a fix has been proposed and contributed back to EbookLib at `https://github.com/changyy/ebooklib/tree/release` and `https://github.com/aerkalov/ebooklib/pull/297`. Once EbookLib is corrected, it will be described in a similar way to `EbookLib==0.18` after switching back.
+This tool relies on the Python library `EbookLib` to create EPUB format files. 
 
-```
-% pip install git+https://github.com/changyy/ebooklib.git@release#egg=EbookLib
-```
+However, currently, ebooklib v0.18 still has some features that need enhancement. Pull requests (PRs) have been created and are awaiting review by the original author. In the meantime, an alternative solution has been implemented using the ebooklib.changyy package. Once the required features for the future are integrated, it will be possible to switch back to the original ebooklib.
+
+More info:
+
+- https://github.com/aerkalov/ebooklib/pulls
+  - https://github.com/aerkalov/ebooklib/pull/298
+  - https://github.com/aerkalov/ebooklib/pull/297
+- https://pypi.org/project/EbookLib.changyy/
+- https://github.com/changyy/ebooklib/tree/release
 
 # Usage
 
 ```
 % pip install epub-image-helper
-% pip install git+https://github.com/changyy/ebooklib.git@release#egg=EbookLib
 % epub-image-helper
 {
     "status": false,
