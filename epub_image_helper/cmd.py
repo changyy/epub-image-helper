@@ -66,7 +66,7 @@ def main():
             sys.exit(0)
 
         if bookConfigJSONObject:
-            for field in ['output', 'bookCover', 'bookId', 'bookTitle', 'bookId', 'bookAuthor', 'epubcheck', 'bookTableOfContent', 'imageDir', 'pickFirstImageToBeBookCover', 'debug', 'imageFormatConversionTable', 'epubcheck', 'bookPageProgressionDirection', 'bookOpfMeta']:
+            for field in ['output', 'bookCover', 'bookId', 'bookTitle', 'bookId', 'bookAuthor', 'epubcheck', 'bookTableOfContent', 'imageDir', 'pickFirstImageToBeBookCover', 'debug', 'imageFormatConversionTable', 'epubcheck', 'bookPageProgressionDirection', 'bookOpfMeta', 'enableImageBookLayout']:
                 if field in bookConfigJSONObject:
                     output['input'][field] = bookConfigJSONObject[field]
 

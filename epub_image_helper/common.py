@@ -18,35 +18,53 @@ def getImageSize(imageBytes):
 def getImageBytesFormat(imageBytes):
     try:
         with Image.open(BytesIO(imageBytes)) as img:
-            return img.format
+            return img.format.lower()
     except Exception as e:
         pass
     return None
 
-def convertImageQuality(imageBytes, toImageFormat: str = 'jpg', quality: int = 100):
+def convertImageQuality(imageBytes, toImageFormat: str = 'png', quality: int = 100):
     if not imageBytes:
         return None
+
     objImage = Image.open(BytesIO(imageBytes))
     imageBuffer = BytesIO()
     toImageFormat = toImageFormat.lower()
+
+    #print(f'convertImageQuality: mode={objImage.mode}, format={objImage.format.lower()}, toImageFormat={toImageFormat}, quality={quality}')
+
+    if quality == 100:
+        if objImage.format.lower() == toImageFormat:
+            return (imageBytes, objImage.size)
+
+    if objImage.mode != 'RGB':
+        #print(f'use RGB: {objImage.size}')
+        objImage = objImage.convert("RGB")
     if toImageFormat == 'jpg' or toImageFormat == 'jpeg':
-        objImage.convert("RGB").save(imageBuffer, "JPEG", quality=quality)
+        #print(f'to jpg: {objImage.size}, quality: {quality}')
+        objImage.save(imageBuffer, "JPEG", quality=quality)
     elif  toImageFormat == 'png':
-        objImage.convert("RGB").save(imageBuffer, "PNG", quality=quality)
+        #print(f'to png: {objImage.size}, quality: {quality}')
+        objImage.save(imageBuffer, "PNG", quality=quality)
     elif  toImageFormat == 'gif':
-        objImage.convert("RGB").save(imageBuffer, "GIF", quality=quality)
+        #print(f'to gif: {objImage.size}, quality: {quality}')
+        objImage.save(imageBuffer, "GIF", quality=quality)
     return (imageBuffer.getvalue(), objImage.size)
 
 def convertPNGToJPGInMemory(pngBytes, quality: int = 100):
     pngImage = Image.open(BytesIO(pngBytes))
     jpgBuffer = BytesIO()
-    pngImage.convert("RGB").save(jpgBuffer, "JPEG", quality=quality)
+    if pngImage.mode != 'RGB':
+        pngImage = pngImage.convert("RGB")
+    pngImage.save(jpgBuffer, "JPEG", quality=quality)
     jpgBytes = jpgBuffer.getvalue()
     return jpgBytes
 
 def convertPNGFileToJPGFile(outputJPGPath: str, pngPath: str, quality: int = 100):
     pngImage = Image.open(pngPath)
-    pngImage.convert("RGB").save(outputJPGPath, "JPEG", quality=quality)
+    if pngImage.mode != 'RGB':
+        pngImage = pngImage.convert("RGB")
+    pngImage.save(outputJPGPath, "JPEG", quality=quality)
 
 def getImagesFrom(path: str, extension: list[str] = ['.png', '.jpg', '.gif'], sortByFilename: bool = True) -> list[str]:
     output = []

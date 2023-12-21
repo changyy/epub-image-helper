@@ -181,7 +181,7 @@ html, body { margin: 0; padding: 0; }
                                 saveToPath = os.path.join(item['workDir'], f"{totalImageCount:03}.{item['imagePdfSaveFormat']}")
                                 imageBytes, imageSize = common.convertImageQuality(targetImage['image'], item['imagePdfSaveFormat'], item['imagePdfSaveQuality'])
                                 with open(saveToPath, "wb") as f:
-                                    f.write(targetImage['image'])
+                                    f.write(imageBytes)
                                 totalImageCount += 1
                         
                         outputItem = {
