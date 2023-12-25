@@ -31,6 +31,130 @@ More info:
 - https://pypi.org/project/EbookLib.changyy/
 - https://github.com/changyy/ebooklib/tree/release
 
+---
+
+# Quick test
+
+## Convert a PDF file consisting entirely of images to an EPUB file consisting entirely of images
+
+```
+% epub-image-helper | jq -r '.version'
+1.0.4
+% mkdir /tmp/test-pdf-workdir
+% ls /tmp/input.pdf 
+/tmp/input.pdf
+% python3 -c 'from epub_image_helper.testPdf2Epub import testPdf2Epub ; testPdf2Epub(inputFile="/tmp/input.pdf", outputFile="/tmp/output.epub", tmpWorkDir="/tmp/test-pdf-workdir")'
+{
+    "status": true,
+...
+    "output": {
+        "path": "/tmp/output.epub",
+        "size": 140028568,
+        "sizeReadable": "133.54 MB",
+        "imageCount": 0,
+        "timeCost": [
+            3.0279159545898438e-05,
+            44.72491812705994,
+            2.896683931350708
+        ]
+    },
+    "error": [],
+    "version": "1.0.4"
+}
+```
+
+## Test image compression
+
+```
+% epub-image-helper | jq -r '.version'
+1.0.4
+% python3 -c 'from epub_image_helper.testImageCompression import testImageCompression; testImageCompression("/tmp/test-images")'
+000.png
+plan: png, 100: rawSize: 720749, newSize: 720749
+plan: png, 95: rawSize: 720749, newSize: 923203
+plan: png, 90: rawSize: 720749, newSize: 923203
+plan: png, 85: rawSize: 720749, newSize: 923203
+plan: jpg, 100: rawSize: 720749, newSize: 3012792
+plan: jpg, 95: rawSize: 720749, newSize: 2023737
+plan: jpg, 90: rawSize: 720749, newSize: 1557584
+plan: jpg, 85: rawSize: 720749, newSize: 1310936
+...
+```
+
+## Batch processing Usage
+
+```
+% epub-image-helper | jq -r '.version'
+1.0.4
+% tree  example    
+example
+├── 01-batch-image-to-epub
+│   ├── image2epub.py
+│   └── input.json
+└── 02-batch-pdf-to-epub
+    ├── input.json
+    └── pdf2epub.py
+
+3 directories, 4 files
+```
+
+### Pack your NAS photo albums
+
+```
+% cd example/01-batch-image-to-epub
+% tree .
+.
+├── epub
+├── image2epub.py
+├── input.json
+└── storage
+    └── url
+        ├── 001
+        │   ├── 01.jpg
+        │   ├── 02.jpg
+        │   └── 03.jpg
+        └── 002
+            ├── 01.jpg
+            ├── 02.jpg
+            ├── 03.jpg
+            ├── 04.jpg
+            └── 05.jpg
+
+6 directories, 10 files
+% cat input.json
+[
+  { 
+    "name": "MyPhotosA",
+    "author": ["Author"],
+    "books": [
+      "https://localhost/001/A", 
+      "https://localhost/002/B", 
+      "https://localhost/003/C"
+    ]
+  },
+  { 
+    "name": "MyPhotosB",
+    "author": ["Author"],
+    "books": [
+      "https://localhost/004/A", 
+      "https://localhost/005/B", 
+      "https://localhost/006/C"
+    ]
+  }
+]
+% python3 image2epub.py
+...
+% tree epub 
+epub
+└── MyPhotosA
+    ├── MyPhotosA01.epub
+    └── MyPhotosA02.epub
+
+2 directories, 2 files
+```
+
+---
+
 # Usage
 
 ```
@@ -183,7 +307,7 @@ Archive:  /tmp/test.epub
 
 3 directories, 8 files
 
-% epub-image-helper exmaple/02-multiple-image-folders
+% epub-image-helper 02-multiple-image-folders
 {
     "status": true,
     "input": {
@@ -256,7 +380,7 @@ Archive:  /tmp/test.epub
 ---
 
 ```
-% epub-image-helper exmaple/02-multiple-image-folders/first exmaple/02-multiple-image-folders/second 
+% epub-image-helper 02-multiple-image-folders/first 02-multiple-image-folders/second 
 {
     "status": true,
     "input": {

@@ -1,0 +1,11 @@
+[
+  { 
+    "name": "MyBook",
+    "author": ["Author"],
+    "books": [
+      "001.pdf",
+      "002.pdf",
+      "003.pdf"
+    ]
+  }
+]

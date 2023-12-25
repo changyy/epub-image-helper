@@ -2,6 +2,11 @@
 import os
 from PIL import Image
 from io import BytesIO
+import re
+import sys
+import json
+import hashlib
+from urllib.parse import urlparse
 
 def getFileSizeReadable(size: int):
     units = ['B', 'KB', 'MB', 'GB', 'TB']
@@ -83,4 +88,80 @@ def getImagesFrom(path: str, extension: list[str] = ['.png', '.jpg', '.gif'], so
             output.sort()
     return output
 
+def exampleGetBookStorageInfoFromUrlsFunc(bookUrl):
+    # build a bookRawId from URL
+    bookRawId = hashlib.md5(bookUrl.encode()).hexdigest()
+    match = re.search(r'/(\d+)/', bookUrl)
+    if match:
+        bookRawId = match.group(1)
+    return os.path.join('storage', 'url', bookRawId)
+
+def exampleGetBookStorageInfoFromPdfsFunc(bookPath):
+    return os.path.join('storage', 'pdf', bookPath)
+
+def loadBookInfoFromConfigOfUrls(inputJsonPath = 'input.json', getBookStorageInfoFunc = None):
+    output = []
+    if not getBookStorageInfoFunc or not callable(getBookStorageInfoFunc):
+        print(f"getBookStorageInfoFunc not found or getBookStorageInfoFunc is not callable func")
+        return output
+    try:
+        with open(inputJsonPath, 'r') as file:
+            rawJson = json.load(file)
+            for item in rawJson:
+                if 'name' not in item or not item['name']:
+                    continue
+                if 'books' not in item or not item['books']:
+                    continue
+                books = []
+                for bookId, bookURL in enumerate(item['books']):
+                    bookImageStoragePath = getBookStorageInfoFunc(bookURL)
+                    # A flag to determine whether to convert to epub
+                    if not os.path.exists(bookImageStoragePath):
+                        continue
+                    outItem = {
+                        "id": bookId, "url": bookURL, 'storage': bookImageStoragePath,
+                    }
+                    if 'author' in item:
+                        outItem['author'] = item['author']
+                    books.append(outItem)
+                if books:
+                    output.append({ "name": item['name'], "books": books })
+    except FileNotFoundError:
+        print(f"inputJson.json: {inputJsonPath} not found")
+    except json.JSONDecodeError:
+        print(f"inputJson.json: {inputJsonPath} not json format")
+    return output
+
+def loadBookInfoFromConfigOfPdfs(inputJsonPath = 'input.json', getBookStorageInfoFunc = None):
+    output = []
+    if not getBookStorageInfoFunc or not callable(getBookStorageInfoFunc):
+        print(f"getBookStorageInfoFunc not found or getBookStorageInfoFunc is not callable func")
+        return output
+    try:
+        with open(inputJsonPath, 'r') as file:
+            rawJson = json.load(file)
+            for item in rawJson:
+                if 'name' not in item or not item['name']:
+                    continue
+                if 'books' not in item or not item['books']:
+                    continue
+                books = []
+                for bookId, bookPDFPath in enumerate(item['books']):
+                    bookImageStoragePath = getBookStorageInfoFunc(bookPDFPath)
+                    # A flag to determine whether to convert to epub
+                    if not os.path.exists(bookImageStoragePath):
+                        continue
+                    outItem = {
+                        "id": bookId, "file": bookPDFPath, 'storage': bookImageStoragePath,
+                    }
+                    if 'author' in item:
+                        outItem['author'] = item['author']
+                    books.append(outItem)
+                if books:
+                    output.append({ "name": item['name'], "books": books })
+    except FileNotFoundError:
+        print(f"inputJson.json: {inputJsonPath} not found")
+    except json.JSONDecodeError:
+        print(f"inputJson.json: {inputJsonPath} not json format")
+    return output
 

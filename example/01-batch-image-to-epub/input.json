@@ -1,0 +1,20 @@
+[
+  { 
+    "name": "MyPhotosA",
+    "author": ["Author"],
+    "books": [
+      "https://localhost/001/A", 
+      "https://localhost/002/B", 
+      "https://localhost/003/C"
+    ]
+  },
+  { 
+    "name": "MyPhotosB",
+    "author": ["Author"],
+    "books": [
+      "https://localhost/004/A", 
+      "https://localhost/005/B", 
+      "https://localhost/006/C"
+    ]
+  }
+]
