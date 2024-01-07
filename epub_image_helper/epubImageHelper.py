@@ -361,6 +361,9 @@ html, body { margin: 0; padding: 0; }
                             if exname in self.imageFormatConversionTable:
                                 imageSetup = self.imageFormatConversionTable[exname]
                                 imageData, imageSize = common.convertImageQuality(imageData, imageSetup['to'], imageSetup['quality'])
+                                imageDateType = common.getImageBytesFormat(imageData)
+                                if imageDateType:
+                                    mediaType = f'image/{imageDateType}'
                                 imageOutputPath = f"{imageUid}.{imageSetup['to']}"
                             else:
                                 imageSize = common.getImageSize(imageData)
